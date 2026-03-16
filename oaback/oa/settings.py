@@ -60,6 +60,7 @@ MIDDLEWARE = [
 
 
 CORS_ALLOWED_ORIGINS = [
+    "https://itech-oa-frontend.vercel.app",
     "https://itech-group-dx-oa-system.vercel.app",
 ]
 
