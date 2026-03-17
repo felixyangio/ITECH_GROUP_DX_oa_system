@@ -23,7 +23,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'realname', 'department']
+        fields = ['id', 'email', 'realname', 'department', 'is_superuser']
 
     def get_department(self, obj):
         try:

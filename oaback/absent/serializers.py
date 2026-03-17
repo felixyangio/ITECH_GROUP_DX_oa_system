@@ -17,6 +17,7 @@ class ResponderSerializer(serializers.ModelSerializer):
 
 class AbsentSerializer(serializers.ModelSerializer):
     applicant_name = serializers.CharField(source='applicant.realname', read_only=True)
+    applicant_info = serializers.SerializerMethodField()
     responder_name = serializers.CharField(source='responder.realname', read_only=True)
     absent_type_name = serializers.CharField(source='absent_type.name', read_only=True)
     absent_type_obj = serializers.SerializerMethodField()
@@ -25,11 +26,24 @@ class AbsentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Absent
         fields = [
-            'id', 'title', 'applicant', 'applicant_name', 'responder', 'responder_name',
+            'id', 'title', 'applicant', 'applicant_name', 'applicant_info', 'responder', 'responder_name',
             'absent_type', 'absent_type_obj', 'absent_type_name', 'start_date', 'end_date',
             'request_content', 'status', 'status_display', 'response_content', 'create_time'
         ]
         read_only_fields = ['applicant', 'status', 'response_content', 'create_time']
+
+    def get_applicant_info(self, obj):
+        user = obj.applicant
+        if not user:
+            return None
+        dept = None
+        try:
+            d = user.staff_profile.department
+            if d:
+                dept = {'id': d.id, 'name': d.name}
+        except Exception:
+            pass
+        return {'id': user.id, 'realname': user.realname, 'department': dept or {'id': None, 'name': ''}}
 
     def get_absent_type_obj(self, obj):
         if obj.absent_type:

@@ -1,46 +1,46 @@
-# OA System — 项目启动文档
+# OA System — Project Startup Guide
 
-## 项目概览
+## Project Overview
 
-本项目为前后端分离的企业 OA 办公系统：
+A full-stack enterprise OA (Office Automation) system with separated frontend and backend:
 
-| 层级 | 技术栈 | 目录 |
-|------|--------|------|
-| 前端 | Vue 3 + Vite + Element Plus + Pinia | `src/` |
-| 后端 | Django 6 + Django REST Framework + JWT | `oaback/` |
-| 数据库 | SQLite3（开发环境） | `oaback/db.sqlite3` |
+| Layer | Tech Stack | Directory |
+|-------|-----------|-----------|
+| Frontend | Vue 3 + Vite + Element Plus + Pinia | `src/` |
+| Backend | Django 6 + Django REST Framework + JWT | `oaback/` |
+| Database | SQLite3 (development) | `oaback/db.sqlite3` |
 
 ---
 
-## 环境要求
+## Requirements
 
-| 工具 | 推荐版本 |
-|------|---------|
+| Tool | Recommended Version |
+|------|-------------------|
 | Python | 3.10+ |
 | Node.js | 18+ |
 | npm | 9+ |
 
 ---
 
-## 一、后端启动
+## 1. Backend Setup
 
-### 1. 创建并激活虚拟环境
+### 1. Create and activate virtual environment
 
 ```bash
-# 在项目根目录下
+# From the project root directory
 python -m venv venv
 
-# Windows 激活
+# Windows
 venv\Scripts\activate
 ```
 
-### 2. 安装依赖
+### 2. Install dependencies
 
 ```bash
 pip install -r oaback/requirements.txt
 ```
 
-主要依赖：
+Key dependencies:
 
 ```
 Django==6.0.3
@@ -50,115 +50,174 @@ django-cors-headers==4.9.0
 pillow==12.1.1
 ```
 
-### 3. 数据库迁移
+### 3. Run database migrations
 
 ```bash
 cd oaback
 python manage.py migrate
 ```
 
-### 4. 创建超级管理员（首次部署）
+### 4. Create a superuser (first-time setup)
 
 ```bash
+cd oaback
 python manage.py createsuperuser
 ```
 
-### 5. 启动后端开发服务
+> The superuser account is the **administrator** of the system. See the Permission System section below for full details.
+
+### 5. Start the backend development server
 
 ```bash
+cd oaback
 python manage.py runserver
 ```
 
-后端默认运行于：`http://127.0.0.1:8000`
+Backend runs at: `http://127.0.0.1:8000`
 
-管理后台地址：`http://127.0.0.1:8000/admin`
+Admin panel: `http://127.0.0.1:8000/admin`
 
 ---
 
-## 二、前端启动
+## 2. Frontend Setup
 
-### 1. 安装依赖
+### 1. Install dependencies
 
 ```bash
-# 在项目根目录下（src/ 所在目录）
+# From the project root directory (where src/ is located)
 npm install
 ```
 
-### 2. 环境变量配置
+### 2. Environment variable configuration
 
-开发环境配置文件：`.env.development`
+Development config file: `.env.development`
 
 ```env
 VITE_BASE_URL=http://127.0.0.1:8000
 VITE_APP_TITLE="OA System"
 ```
 
-> 若后端端口有变动，修改 `VITE_BASE_URL` 即可。
+> If the backend port changes, update `VITE_BASE_URL` accordingly.
 
-### 3. 启动前端开发服务
+### 3. Start the frontend development server
 
 ```bash
 npm run dev
 ```
 
-前端默认运行于：`http://localhost:5173`
+Frontend runs at: `http://localhost:5173`
 
 ---
 
-## 三、初始数据配置（首次使用）
+## 3. Initial Data Setup (First-time Use)
 
-进入 Django 管理后台 `http://127.0.0.1:8000/admin`，按以下顺序操作：
+Go to Django Admin at `http://127.0.0.1:8000/admin` and follow these steps:
 
-1. **新建部门**：STAFF → Department → Add
-   - 示例：`Tech`、`Marketing`
+1. **Create departments**: STAFF → Department → Add
+   - Example: `Tech`, `Marketing`, `Board of Directors`
 
-2. **注册员工**：在前端 Employee List 页面点击 Add，或通过管理后台 STAFF → Staff 手动创建
+2. **Add employees**: Log in to the frontend as a superuser and go to Employee Management → Add Employee, or create them manually via STAFF → Staff in the admin panel
 
-3. **为员工绑定部门**：STAFF → Staff → 编辑对应员工，设置所属部门
-
----
-
-## 四、API 路由一览
-
-| 模块 | 前缀 | 说明 |
-|------|------|------|
-| 认证 | `/auth/` | 登录、修改密码 |
-| 员工 | `/staff/` | 部门管理、员工 CRUD |
-| 公告 | `/inform/` | 发布、列表、详情、阅读记录 |
-| 请假 | `/absent/` | 请假申请与审批 |
-| 首页 | `/home/` | 数据统计 |
+3. **Assign departments**: STAFF → Staff → edit the employee and set their department
 
 ---
 
-## 五、员工状态说明
+## 4. Permission System
 
-| 值 | 含义 | 前端显示 |
-|----|------|---------|
-| `1` | Active（正常） | 绿色 |
-| `0` | Inactive（停用） | 黄色 |
-| `3` | Locked（锁定） | 红色 |
+The system has two permission levels:
+
+### Superuser (Administrator)
+Created via `python manage.py createsuperuser` or by checking **Superuser status** in Django Admin.
+
+| Feature | Superuser |
+|---------|-----------|
+| Add Employee | ✅ |
+| Delete Employee | ✅ |
+| Update Employee Status | ✅ |
+| View all Leave Requests (Team Attendance) | ✅ |
+| Approve / Reject any Leave Request | ✅ |
+| Delete any Notification | ✅ |
+| Publish Notification to any department | ✅ |
+| View all Notifications | ✅ |
+
+### Regular Employee
+Standard accounts created through Add Employee.
+
+| Feature | Regular Employee |
+|---------|----------------|
+| View own Leave Requests | ✅ |
+| Submit Leave Request | ✅ |
+| Delete own Notifications | ✅ |
+| Publish Notification to own department or All | ✅ |
+| View Notifications (own dept + public only) | ✅ |
+| Team Attendance / Add Employee / Delete Employee | ❌ |
+
+> **Note:** After a superuser logs in, they must **log out and log back in** if their `is_superuser` flag was changed, since the frontend caches user info in `localStorage`.
 
 ---
 
-## 六、JWT 认证说明
+## 5. API Routes
 
-- 请求头格式：`Authorization: JWT <token>`
-- Access Token 有效期：**1 天**
-- Refresh Token 有效期：**7 天**
-- Token 存储于浏览器 `localStorage`
+| Module | Prefix | Description |
+|--------|--------|-------------|
+| Auth | `/auth/` | Login, change password |
+| Staff | `/staff/` | Department management, employee CRUD |
+| Notification | `/inform/` | Publish, list, detail, read records, file/image upload |
+| Leave | `/absent/` | Leave application and approval |
+| Home | `/home/` | Dashboard statistics |
+| Media files | `/media/` | Uploaded images and attachments |
 
 ---
 
-## 七、常见问题
+## 6. Notification File Uploads
 
-**Q：前端请求报 CORS 错误？**
-确认后端已运行在 `http://127.0.0.1:8000`，且 `.env.development` 中 `VITE_BASE_URL` 与之一致。
+The rich-text editor in **Publish Notification** supports:
+- **Images**: drag & drop or toolbar button, up to **25 MB**
+- **Other files** (PDF, Word, etc.): toolbar button or drag & drop, up to **25 MB**
 
-**Q：登录后页面空白 / 员工列表无数据？**
-检查该登录用户是否已在 Django Admin 中关联了 Staff 记录，并设置了所属部门。
+Uploaded files are stored under `oaback/media/`:
+- Images → `oaback/media/images/`
+- Other files → `oaback/media/attachments/`
 
-**Q：发布公告后列表无数据？**
-确认已执行所有数据库迁移（`python manage.py migrate`），`inform_inform_departments` 关联表需存在。
+---
 
-**Q：部门下拉框为空？**
-确认已在 Django Admin 的 STAFF → Department 中至少添加一个部门。
+## 7. Employee Status
+
+| Value | Meaning | Frontend Display |
+|-------|---------|-----------------|
+| `1` | Active | Green |
+| `0` | Inactive | Yellow |
+| `3` | Locked | Red |
+
+Only superusers can update employee status. Status can also be changed via Django Admin.
+
+---
+
+## 8. JWT Authentication
+
+- Request header format: `Authorization: JWT <token>`
+- Access Token lifetime: **1 day**
+- Refresh Token lifetime: **7 days**
+- Tokens are stored in the browser's `localStorage`
+
+---
+
+## 9. Frequently Asked Questions
+
+**Q: Frontend requests return CORS errors?**
+Make sure the backend is running at `http://127.0.0.1:8000` and `VITE_BASE_URL` in `.env.development` matches.
+
+**Q: Page is blank or Employee List shows no data after login?**
+Check that the logged-in user has a Staff record in Django Admin with a department assigned.
+
+**Q: Notification List is empty after publishing?**
+Make sure all migrations have been applied (`python manage.py migrate`). The `inform_inform_departments` join table must exist.
+
+**Q: Department dropdown is empty?**
+Add at least one department in Django Admin under STAFF → Department.
+
+**Q: Superuser cannot see Team Attendance / Add Employee after login?**
+Log out and log back in so the frontend reloads the updated user info (including `is_superuser`) from the backend.
+
+**Q: File upload in Notification editor does nothing?**
+Ensure the backend server is running. Uploaded files are served from `/media/` — confirm `MEDIA_ROOT` is writable.

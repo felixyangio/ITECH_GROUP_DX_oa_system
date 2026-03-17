@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from datetime import date
 
 from .models import Department, Staff
 from .serializers import DepartmentSerializer, StaffSerializer, AddStaffSerializer
@@ -52,6 +53,8 @@ class StaffView(APIView):
         return Response({'total': total, 'page': page, 'items': serializer.data})
 
     def post(self, request):
+        if not request.user.is_superuser:
+            return Response({'detail': 'Permission denied. Only superusers can add employees.'}, status=status.HTTP_403_FORBIDDEN)
         serializer = AddStaffSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
@@ -61,7 +64,7 @@ class StaffView(APIView):
             password=data['password'],
             realname=data['realname'],
         )
-        staff = Staff.objects.create(user=user)
+        staff = Staff.objects.create(user=user, department=data.get('department'), join_date=date.today())
         return Response(StaffSerializer(staff).data, status=status.HTTP_201_CREATED)
 
 
@@ -69,6 +72,8 @@ class StaffDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request, staff_id):
+        if not request.user.is_superuser:
+            return Response({'detail': 'Permission denied. Only superusers can update employee status.'}, status=status.HTTP_403_FORBIDDEN)
         try:
             staff = Staff.objects.get(pk=staff_id)
         except Staff.DoesNotExist:
@@ -78,3 +83,13 @@ class StaffDetailView(APIView):
             staff.status = new_status
             staff.save()
         return Response(StaffSerializer(staff).data)
+
+    def delete(self, request, staff_id):
+        if not request.user.is_superuser:
+            return Response({'detail': 'Permission denied. Only superusers can delete employees.'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            staff = Staff.objects.get(pk=staff_id)
+        except Staff.DoesNotExist:
+            return Response({'detail': 'Staff not found'}, status=status.HTTP_404_NOT_FOUND)
+        staff.user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -23,8 +23,11 @@ class ResponderView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Return current user's info as default responder (no manager concept yet)
-        user = User.objects.filter(is_staff=True).exclude(pk=request.user.pk).first()
+        # Return the first superuser as the default approver
+        user = User.objects.filter(is_superuser=True).exclude(pk=request.user.pk).first()
+        if not user:
+            # Fallback: any is_staff user
+            user = User.objects.filter(is_staff=True).exclude(pk=request.user.pk).first()
         if user:
             return Response({'id': user.id, 'email': user.email, 'realname': user.realname})
         return Response({'id': None, 'email': '', 'realname': ''})
@@ -39,6 +42,8 @@ class AbsentView(APIView):
         size = 10
         if who == 'my':
             queryset = Absent.objects.filter(applicant=request.user)
+        elif request.user.is_superuser:
+            queryset = Absent.objects.all()
         else:
             queryset = Absent.objects.filter(responder=request.user)
         count = queryset.count()
@@ -66,10 +71,16 @@ class AbsentDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request, absent_id):
-        try:
-            absent = Absent.objects.get(pk=absent_id, responder=request.user)
-        except Absent.DoesNotExist:
-            return Response({'detail': 'Application not found or forbidden'}, status=status.HTTP_404_NOT_FOUND)
+        if request.user.is_superuser:
+            try:
+                absent = Absent.objects.get(pk=absent_id)
+            except Absent.DoesNotExist:
+                return Response({'detail': 'Application not found'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            try:
+                absent = Absent.objects.get(pk=absent_id, responder=request.user)
+            except Absent.DoesNotExist:
+                return Response({'detail': 'Application not found or forbidden'}, status=status.HTTP_404_NOT_FOUND)
         if absent.status != Absent.STATUS_PENDING:
             return Response({'detail': 'This application has already been processed'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = HandleAbsentSerializer(data=request.data)

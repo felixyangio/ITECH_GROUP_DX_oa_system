@@ -29,6 +29,10 @@ class AddStaffSerializer(serializers.Serializer):
     realname = serializers.CharField(max_length=50)
     email = serializers.EmailField()
     password = serializers.CharField(min_length=6)
+    department_id = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(), source='department',
+        required=False, allow_null=True, default=None
+    )
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
